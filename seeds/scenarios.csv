@@ -1,4 +1,4 @@
 stage,routes,template_text,stat_effect,weight
-childhood,route_a,公園で遊んでいる{{name}}ちゃん,{"stamina": 10},1
-childhood,route_b,家でお絵かきしている{{name}}ちゃん,{"intelligence": 10},1
-school,route_a,教室で勉強している{{name}}ちゃん,{"intelligence": 20},2
+childhood,route_a,公園で遊んでいる{{name}}ちゃん,"{""stamina"": 10}",1
+childhood,route_b,家でお絵かきしている{{name}}ちゃん,"{""intelligence"": 10}",1
+school,route_a,教室で勉強している{{name}}ちゃん,"{""intelligence"": 20}",2
