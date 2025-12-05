@@ -1,0 +1,35 @@
+# --- 1. 最重要：秘密情報 (Security) ---
+# パスワードが書いてあるファイルは絶対に通さない
+.env
+.env*.local
+
+# --- 2. ビルド生成物 (Binaries) ---
+# コードから作り出せる「実行ファイル」は保存しない（重いし、OSによって違うから）
+# Windows用
+*.exe
+*.dll
+# Mac/Linux用
+main
+test
+debug
+
+# バイナリを出力するフォルダが決まっているならそれも除外
+/bin/
+/dist/
+/out/
+
+# --- 3. エディタの設定ファイル (IDE) ---
+# 自分のPCの画面設定などは、他の人には関係ないので共有しない
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- 4. OSのゴミファイル (System) ---
+.DS_Store
+Thumbs.db
+
+# --- 5. テストや一時ファイル (Misc) ---
+coverage.txt
+profile.out
+*.log
