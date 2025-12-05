@@ -29,7 +29,7 @@ func main() {
 
 	// 3. マイグレーションの準備
 	m, err := migrate.New(
-		"file://db/migrations",
+	"file://internal/infrastructure/database/migrations",
 		databaseURL,
 	)
 	if err != nil {
