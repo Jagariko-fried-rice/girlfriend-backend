@@ -11,4 +11,6 @@ type PartnerRepository interface {
 	UpdateStatus(ctx context.Context, partnerID string, stamina, intelligence, sense int) error
 
 	FindByID(ctx context.Context, partnerID string) (*model.Partner, error)
+
+	Create(ctx context.Context, partner *model.Partner) error
 }
