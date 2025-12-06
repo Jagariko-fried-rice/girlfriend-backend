@@ -10,9 +10,19 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 
+	httpSwagger "github.com/swaggo/http-swagger" 
+	_ "girlfriend-backend/docs"
+
 	"girlfriend-backend/internal/infrastructure/repository"
 	"girlfriend-backend/internal/interface/handler"
 )
+
+// ★追加: API全体の設定コメント
+// @title           Girlfriend Backend API
+// @version         1.0
+// @description     美少女育成ゲームのバックエンドAPIです。
+// @host            localhost:8080
+// @BasePath        /
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -45,6 +55,9 @@ func main() {
 	mux.HandleFunc("POST /sleep/end", sleepHandler.EndSleep)
 	//パートナー登録API
 	mux.HandleFunc("POST /partners", partnerHandler.CreatePartner)
+
+	// Swagger UIのエンドポイント
+	mux.Handle("GET /swagger/", httpSwagger.WrapHandler)
 
 	// CORS設定（ミドルウェア）
 	corsMux := enableCORS(mux)
