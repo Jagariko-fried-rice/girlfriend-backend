@@ -8,11 +8,14 @@ type Scenario struct {
 	Stage          string
 	Routes         string
 	TemplateText   string
-	StatEffect     string // 一旦JSON文字列として扱います
+	StatEffect     string // JSON文字列
 	Weight         int
 	ConditionStat  *string // NULL許容
 	ConditionValue int
 	SuccessText    *string // NULL許容
 	FailureText    *string // NULL許容
+	
+	SuccessEffect  string // JSON文字列
+	FailureEffect  string // JSON文字列
 	ImagePrompt    string 
 }
