@@ -1,9 +1,125 @@
 basePath: /
+definitions:
+  girlfriend-backend_internal_domain_model.Memory:
+    properties:
+      generated_prompt:
+        type: string
+      id:
+        type: string
+      occurred_at:
+        type: string
+      partner_id:
+        type: string
+      scenario_id:
+        type: string
+    type: object
+  girlfriend-backend_internal_domain_model.Partner:
+    properties:
+      current_stage:
+        type: string
+      hair_color:
+        type: string
+      id:
+        type: string
+      intelligence:
+        type: integer
+      name:
+        type: string
+      personality:
+        type: string
+      sense:
+        type: integer
+      stamina:
+        type: integer
+      user_id:
+        type: string
+      voice_type:
+        type: string
+    type: object
+  internal_interface_handler.CreatePartnerRequest:
+    properties:
+      hair_color:
+        type: string
+      name:
+        type: string
+      personality:
+        type: string
+      user_id:
+        type: string
+      voice_type:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
   description: 美少女育成ゲームのバックエンドAPIです。
   title: Girlfriend Backend API
   version: "1.0"
-paths: {}
+paths:
+  /partners:
+    post:
+      consumes:
+      - application/json
+      description: 新しいパートナーを作成し、初期ステータスを登録します
+      parameters:
+      - description: 作成情報
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interface_handler.CreatePartnerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/girlfriend-backend_internal_domain_model.Partner'
+      summary: パートナー新規作成
+      tags:
+      - partners
+  /partners/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 指定されたIDのパートナーのステータス情報を返します
+      parameters:
+      - description: Partner ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/girlfriend-backend_internal_domain_model.Partner'
+      summary: パートナー情報の取得
+      tags:
+      - partners
+  /partners/{id}/memories:
+    get:
+      consumes:
+      - application/json
+      description: 指定されたIDのパートナーの思い出ログ一覧を返します
+      parameters:
+      - description: Partner ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/girlfriend-backend_internal_domain_model.Memory'
+            type: array
+      summary: 思い出の取得
+      tags:
+      - partners
 swagger: "2.0"

@@ -14,7 +14,186 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {}
+    "paths": {
+        "/partners": {
+            "post": {
+                "description": "新しいパートナーを作成し、初期ステータスを登録します",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "partners"
+                ],
+                "summary": "パートナー新規作成",
+                "parameters": [
+                    {
+                        "description": "作成情報",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_interface_handler.CreatePartnerRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/girlfriend-backend_internal_domain_model.Partner"
+                        }
+                    }
+                }
+            }
+        },
+        "/partners/{id}": {
+            "get": {
+                "description": "指定されたIDのパートナーのステータス情報を返します",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "partners"
+                ],
+                "summary": "パートナー情報の取得",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Partner ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/girlfriend-backend_internal_domain_model.Partner"
+                        }
+                    }
+                }
+            }
+        },
+        "/partners/{id}/memories": {
+            "get": {
+                "description": "指定されたIDのパートナーの思い出ログ一覧を返します",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "partners"
+                ],
+                "summary": "思い出の取得",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Partner ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/girlfriend-backend_internal_domain_model.Memory"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "girlfriend-backend_internal_domain_model.Memory": {
+            "type": "object",
+            "properties": {
+                "generated_prompt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "occurred_at": {
+                    "type": "string"
+                },
+                "partner_id": {
+                    "type": "string"
+                },
+                "scenario_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "girlfriend-backend_internal_domain_model.Partner": {
+            "type": "object",
+            "properties": {
+                "current_stage": {
+                    "type": "string"
+                },
+                "hair_color": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "intelligence": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "personality": {
+                    "type": "string"
+                },
+                "sense": {
+                    "type": "integer"
+                },
+                "stamina": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "voice_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_interface_handler.CreatePartnerRequest": {
+            "type": "object",
+            "properties": {
+                "hair_color": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "personality": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "voice_type": {
+                    "type": "string"
+                }
+            }
+        }
+    }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
