@@ -3,9 +3,10 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"girlfriend-backend/internal/domain/repository"
-
+	
+	// ★以下の2行が必要です
 	"girlfriend-backend/internal/domain/model"
+	"girlfriend-backend/internal/domain/repository"
 )
 
 type partnerRepository struct {
@@ -17,7 +18,6 @@ func NewPartnerRepository(db *sql.DB) repository.PartnerRepository {
 }
 
 func (r *partnerRepository) UpdateStatus(ctx context.Context, partnerID string, stamina, intelligence, sense int) error {
-	// 現在の値に加算するのではなく、計算済みの最終的な値をセットする方式にします
 	query := `
 		UPDATE partners
 		SET stamina = $1, intelligence = $2, sense = $3
