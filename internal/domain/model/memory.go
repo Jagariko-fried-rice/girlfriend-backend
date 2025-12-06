@@ -7,9 +7,9 @@ import (
 )
 
 type Memory struct {
-	ID              uuid.UUID
-	PartnerID       uuid.UUID
-	ScenarioID      uuid.UUID
-	GeneratedPrompt string // 実際に使ったプロンプト（画像用ではなくテキスト用）
-	OccurredAt      time.Time
+	ID              uuid.UUID `json:"id"`
+	PartnerID       uuid.UUID `json:"partner_id"`
+	ScenarioID      uuid.UUID `json:"scenario_id"`
+	GeneratedPrompt string    `json:"generated_prompt"`
+	OccurredAt      time.Time `json:"occurred_at"`
 }
