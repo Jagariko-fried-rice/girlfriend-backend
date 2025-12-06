@@ -14,4 +14,5 @@ type Scenario struct {
 	ConditionValue int
 	SuccessText    *string // NULL許容
 	FailureText    *string // NULL許容
+	ImagePrompt    string 
 }
