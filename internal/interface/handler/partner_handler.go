@@ -23,6 +23,17 @@ type CreatePartnerRequest struct {
 	VoiceType   string `json:"voice_type"`
 }
 
+// GetStatus: パートナーのステータスを取得
+// ★追加: Swagger用コメント
+// @Summary      パートナー情報の取得
+// @Description  指定されたIDのパートナーのステータス情報を返します
+// @Tags         partners
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "Partner ID (UUID)"
+// @Success      200  {object}  model.Partner
+// @Router       /partners/{id} [get]
+
 func NewPartnerHandler(pRepo repository.PartnerRepository, mRepo repository.MemoryRepository) *PartnerHandler {
 	return &PartnerHandler{PartnerRepo: pRepo, MemoryRepo: mRepo}
 }
@@ -46,6 +57,16 @@ func (h *PartnerHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(partner)
 }
+// GetMemories: 思い出リストを取得
+// ★追加: Swagger用コメント
+// @Summary      思い出の取得
+// @Description  指定されたIDのパートナーの思い出ログ一覧を返します
+// @Tags         partners
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "Partner ID (UUID)"
+// @Success      200  {array}   model.Memory
+// @Router       /partners/{id}/memories [get]
 
 // GetMemories: 思い出リストを取得
 // GET /partners/{id}/memories
@@ -66,6 +87,17 @@ func (h *PartnerHandler) GetMemories(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(memories)
 }
+
+// CreatePartner: パートナー新規作成
+// ★追加: Swagger用コメント
+// @Summary      パートナー新規作成
+// @Description  新しいパートナーを作成し、初期ステータスを登録します
+// @Tags         partners
+// @Accept       json
+// @Produce      json
+// @Param        request body handler.CreatePartnerRequest true "作成情報"
+// @Success      201  {object}  model.Partner
+// @Router       /partners [post]
 
 func (h *PartnerHandler) CreatePartner(w http.ResponseWriter, r *http.Request) {
 	var req CreatePartnerRequest
