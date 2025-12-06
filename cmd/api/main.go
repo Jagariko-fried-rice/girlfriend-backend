@@ -29,10 +29,9 @@ func main() {
 	partnerRepo := repository.NewPartnerRepository(db)
 	memoryRepo := repository.NewMemoryRepository(db)
 	sleepRepo := repository.NewSleepLogRepository(db)
-	
+
 	partnerHandler := handler.NewPartnerHandler(partnerRepo, memoryRepo)
 	sleepHandler := handler.NewSleepHandler(sleepRepo, partnerRepo)
-
 
 	// ルーティング設定
 	mux := http.NewServeMux()
