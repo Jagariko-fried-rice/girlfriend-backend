@@ -16,7 +16,25 @@ import (
 	dbRepo "girlfriend-backend/internal/infrastructure/repository"
 )
 
+// ★追加: 変換マップ（これを充実させると表現力が上がります）
+var hairColorMap = map[string]string{
+	"黒髪": "black hair",
+	"金髪": "blonde hair",
+	"銀髪": "silver hair",
+	"茶髪": "brown hair",
+	"青髪": "blue hair",
+	"赤髪": "red hair",
+}
+
+var personalityMap = map[string]string{
+	"元気":   "energetic, cheerful, big smile, open mouth",
+	"おっとり": "gentle, relaxed, soft smile",
+	"クール":  "cool, calm, sharp eyes, slight smile",
+	"内気":   "shy, blushing, looking down",
+}
+
 func main() {
+	// ... (DB接続などは既存のまま) ...
 	if err := godotenv.Load(); err != nil {
 		log.Println("Note: .env file not found")
 	}
@@ -26,17 +44,15 @@ func main() {
 	}
 	defer db.Close()
 
-	// 全リポジトリの準備
 	userRepo := dbRepo.NewUserRepository(db)
 	scenarioRepo := dbRepo.NewScenarioRepository(db)
 	imageRepo := dbRepo.NewPartnerImageRepository(db)
-	partnerRepo := dbRepo.NewPartnerRepository(db) // 追加
-	memoryRepo := dbRepo.NewMemoryRepository(db)   // 追加
+	partnerRepo := dbRepo.NewPartnerRepository(db)
+	memoryRepo := dbRepo.NewMemoryRepository(db)
 
 	ctx := context.Background()
-	fmt.Println("--- 固定イベント生成バッチ (ステータス変動あり) ---")
+	fmt.Println("--- 固定イベント生成バッチ (ステータス・外見反映あり) ---")
 
-	// 1. 今回のターゲット（大人・おはよう）
 	targetStage := "adult"
 	targetRoute := "osananajimi_good_morning"
 
@@ -46,7 +62,6 @@ func main() {
 	}
 	fmt.Printf("シナリオ「%s」を実行します。\n", scenario.Routes)
 
-	// 2. ユーザー取得
 	users, err := userRepo.FindAllWithPartner(ctx)
 	if err != nil {
 		log.Fatal(err)
@@ -101,16 +116,33 @@ func main() {
 		}
 
 		// E. DB更新: 画像予約 (Insert)
+	// 1. 髪色変換
+		hairPrompt, ok := hairColorMap[u.HairColor]
+		if !ok {
+			hairPrompt = "black hair" // デフォルト
+		}
+		// 2. 性格変換
+		persPrompt, ok := personalityMap[u.Personality]
+		if !ok {
+			persPrompt = "normal expression" // デフォルト
+		}
+
+		// 3. 置換実行
+		genPrompt := scenario.ImagePrompt
+		genPrompt = strings.ReplaceAll(genPrompt, "{{hair_color}}", hairPrompt)
+		genPrompt = strings.ReplaceAll(genPrompt, "{{personality}}", persPrompt)
+
+		// E. DB更新: 画像予約
 		newImage := &model.PartnerImage{
 			PartnerID:        u.PartnerID,
-			Stage:            "adult", // 強制大人
-			GenerationPrompt: scenario.ImagePrompt,
+			Stage:            "adult",
+			GenerationPrompt: genPrompt, // ★置換後のプロンプトを使用
 			Status:           model.ImageStatusPending,
 		}
 		if err := imageRepo.Create(ctx, newImage); err != nil {
 			log.Printf("予約失敗: %v", err)
 		} else {
-			fmt.Printf("完了! 新ステータス(Sta:%d, Int:%d, Sen:%d)\n", newStamina, newIntel, newSense)
+			fmt.Println("完了! 画像予約を作成しました。")
 		}
 	}
 
