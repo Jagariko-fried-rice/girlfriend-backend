@@ -22,12 +22,3 @@ type UserRepository interface {
 	// 全ユーザーと、そのパートナー情報を取得
 	FindAllWithPartner(ctx context.Context) ([]*model.UserWithPartner, error)
 }
-
-func (r *partnerImageRepository) Create(ctx context.Context, img *model.PartnerImage) error {
-	query := `
-		INSERT INTO partner_images (partner_id, stage, generation_prompt, status)
-		VALUES ($1, $2, $3, $4)
-	`
-	_, err := r.db.ExecContext(ctx, query, img.PartnerID, img.Stage, img.GenerationPrompt, img.Status)
-	return err
-}
