@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+
+	"girlfriend-backend/internal/domain/model"
 )
 
 type PartnerRepository interface {

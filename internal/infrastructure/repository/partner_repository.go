@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"girlfriend-backend/internal/domain/repository"
+
+	"girlfriend-backend/internal/domain/model"
 )
 
 type partnerRepository struct {
