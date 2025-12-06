@@ -7,13 +7,16 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 func main() {
+	// 1. 設定読み込み
 	if err := godotenv.Load(); err != nil {
 		log.Println("Note: .env file not found")
 	}
@@ -28,30 +31,63 @@ func main() {
 	}
 	defer db.Close()
 
-	file, err := os.Open("seeds/scenarios.csv")
+	// 2. seedsフォルダ内の全CSVファイルを取得
+	files, err := filepath.Glob("seeds/*.csv")
 	if err != nil {
-		log.Fatalf("CSVファイルの読み込みに失敗: %v", err)
+		log.Fatal(err)
+	}
+
+	if len(files) == 0 {
+		log.Println("seedsフォルダにCSVファイルが見つかりません。")
+		return
+	}
+
+	fmt.Printf("%d 個のCSVファイルが見つかりました。\n", len(files))
+
+	// 3. ファイルごとのループ処理
+	for _, file := range files {
+		fileName := filepath.Base(file)
+		fmt.Printf("処理中: %s ... ", fileName)
+
+		// ファイル名で処理を振り分け (Dispatcher)
+		if strings.Contains(fileName, "scenarios") {
+			if err := importScenarios(db, file); err != nil {
+				log.Printf("失敗: %v\n", err)
+			} else {
+				fmt.Println("成功")
+			}
+		} else {
+			// 将来他のテーブル（items.csvなど）が増えたらここに追加
+			fmt.Println("スキップ (対応するインポーターがありません)")
+		}
+	}
+	fmt.Println("全ての処理が完了しました。")
+}
+
+// importScenarios: シナリオデータのインポート処理（ロジックを分離）
+func importScenarios(db *sql.DB, filePath string) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
 	}
 	defer file.Close()
 
 	reader := csv.NewReader(file)
 	if _, err := reader.Read(); err != nil { // ヘッダー読み飛ばし
-		log.Fatal(err)
+		return err
 	}
 
 	records, err := reader.ReadAll()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-
-	fmt.Printf("%d 件のシナリオデータを処理します...\n", len(records))
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	// 変更点: image_prompt ($12) を追加
+	// ImagePrompt対応済みのクエリ
 	query := `
 		INSERT INTO scenarios (
 			stage, routes, template_text, stat_effect, weight,
@@ -75,7 +111,7 @@ func main() {
 
 	stmt, err := tx.Prepare(query)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer stmt.Close()
 
@@ -88,7 +124,8 @@ func main() {
 		}
 
 		if !json.Valid([]byte(record[3])) {
-			log.Fatalf("%d行目のJSON形式が不正です: %s", i+2, record[3])
+			tx.Rollback()
+			return fmt.Errorf("%d行目のJSON形式が不正です: %s", i+2, record[3])
 		}
 
 		var condStat, succText, failText, succEff, failEff interface{}
@@ -99,12 +136,10 @@ func main() {
 		if record[9] == "" { succEff = "{}" } else { succEff = record[9] }
 		if record[10] == "" { failEff = "{}" } else { failEff = record[10] }
 
-		// 追加: 12列目(image_prompt)の取得処理
 		imagePrompt := ""
 		if len(record) > 11 {
 			imagePrompt = record[11]
 		}
-		// もし空なら、日本語テキストをコピー（エラー回避）
 		if imagePrompt == "" {
 			imagePrompt = record[2]
 		}
@@ -112,16 +147,13 @@ func main() {
 		_, err := stmt.Exec(
 			record[0], record[1], record[2], record[3], weight,
 			condStat, condVal, succText, failText, succEff, failEff,
-			imagePrompt, // 追加 ($12)
+			imagePrompt,
 		)
 		if err != nil {
 			tx.Rollback()
-			log.Fatalf("%d行目の処理でエラー: %v", i+2, err)
+			return fmt.Errorf("%d行目でDBエラー: %w", i+2, err)
 		}
 	}
 
-	if err := tx.Commit(); err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("成功！データの更新・登録が完了しました。")
+	return tx.Commit()
 }
