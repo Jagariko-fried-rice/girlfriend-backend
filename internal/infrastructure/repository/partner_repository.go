@@ -48,10 +48,9 @@ func (r *partnerRepository) Create(ctx context.Context, p *model.Partner) error 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id
 	`
-	// 生成されたID（UUID）を p.ID に書き戻す
 	err := r.db.QueryRowContext(
 		ctx, query,
-		p.UserID, p.Name, "元気", "黒髪", "soprano", // 性格などは後で可変にするため、一旦仮の値や引数を使用
+		p.UserID, p.Name, p.Personality, p.HairColor, p.VoiceType,
 		p.CurrentStage, p.Stamina, p.Intelligence, p.Sense,
 	).Scan(&p.ID)
 
