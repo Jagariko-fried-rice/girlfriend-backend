@@ -41,3 +41,19 @@ func (r *partnerRepository) FindByID(ctx context.Context, partnerID string) (*mo
 	}
 	return &p, nil
 }
+
+func (r *partnerRepository) Create(ctx context.Context, p *model.Partner) error {
+	query := `
+		INSERT INTO partners (user_id, name, personality, hair_color, voice_type, current_stage, stamina, intelligence, sense)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id
+	`
+	// 生成されたID（UUID）を p.ID に書き戻す
+	err := r.db.QueryRowContext(
+		ctx, query,
+		p.UserID, p.Name, "元気", "黒髪", "soprano", // 性格などは後で可変にするため、一旦仮の値や引数を使用
+		p.CurrentStage, p.Stamina, p.Intelligence, p.Sense,
+	).Scan(&p.ID)
+
+	return err
+}
