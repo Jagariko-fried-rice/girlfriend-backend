@@ -1,0 +1,1 @@
+ALTER TABLE scenarios ADD CONSTRAINT uq_scenarios_stage_routes UNIQUE (stage, routes);
