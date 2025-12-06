@@ -12,6 +12,8 @@ type PartnerImageRepository interface {
 
 	// Update は、画像生成の結果（URLやステータス）を更新します
 	Update(ctx context.Context, image *model.PartnerImage) error
+
+	Create(ctx context.Context, image *model.PartnerImage) error
 }
 
 type ScenarioRepository interface {
@@ -22,3 +24,4 @@ type UserRepository interface {
 	// 全ユーザーと、そのパートナー情報を取得
 	FindAllWithPartner(ctx context.Context) ([]*model.UserWithPartner, error)
 }
+
