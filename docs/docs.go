@@ -115,6 +115,74 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/sleep/end": {
+            "post": {
+                "description": "睡眠を終了し、睡眠時間を計算して記録します",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sleep"
+                ],
+                "summary": "おはよう（起床）",
+                "parameters": [
+                    {
+                        "description": "パートナーID",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_interface_handler.SleepRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/girlfriend-backend_internal_domain_model.SleepLog"
+                        }
+                    }
+                }
+            }
+        },
+        "/sleep/start": {
+            "post": {
+                "description": "指定されたパートナーの睡眠計測を開始します",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sleep"
+                ],
+                "summary": "おやすみ（睡眠開始）",
+                "parameters": [
+                    {
+                        "description": "パートナーID",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_interface_handler.SleepRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/girlfriend-backend_internal_domain_model.SleepLog"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -173,6 +241,31 @@ const docTemplate = `{
                 }
             }
         },
+        "girlfriend-backend_internal_domain_model.SleepLog": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "partner_id": {
+                    "type": "string"
+                },
+                "sleep_minutes": {
+                    "description": "同上",
+                    "type": "integer"
+                },
+                "slept_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "wake_at": {
+                    "description": "まだ起きてない時はNULLなのでポインタ",
+                    "type": "string"
+                }
+            }
+        },
         "internal_interface_handler.CreatePartnerRequest": {
             "type": "object",
             "properties": {
@@ -189,6 +282,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "voice_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_interface_handler.SleepRequest": {
+            "type": "object",
+            "properties": {
+                "partner_id": {
                     "type": "string"
                 }
             }

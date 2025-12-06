@@ -36,6 +36,23 @@ definitions:
       voice_type:
         type: string
     type: object
+  girlfriend-backend_internal_domain_model.SleepLog:
+    properties:
+      id:
+        type: string
+      partner_id:
+        type: string
+      sleep_minutes:
+        description: 同上
+        type: integer
+      slept_at:
+        type: string
+      user_id:
+        type: string
+      wake_at:
+        description: まだ起きてない時はNULLなのでポインタ
+        type: string
+    type: object
   internal_interface_handler.CreatePartnerRequest:
     properties:
       hair_color:
@@ -47,6 +64,11 @@ definitions:
       user_id:
         type: string
       voice_type:
+        type: string
+    type: object
+  internal_interface_handler.SleepRequest:
+    properties:
+      partner_id:
         type: string
     type: object
 host: localhost:8080
@@ -122,4 +144,48 @@ paths:
       summary: 思い出の取得
       tags:
       - partners
+  /sleep/end:
+    post:
+      consumes:
+      - application/json
+      description: 睡眠を終了し、睡眠時間を計算して記録します
+      parameters:
+      - description: パートナーID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interface_handler.SleepRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/girlfriend-backend_internal_domain_model.SleepLog'
+      summary: おはよう（起床）
+      tags:
+      - sleep
+  /sleep/start:
+    post:
+      consumes:
+      - application/json
+      description: 指定されたパートナーの睡眠計測を開始します
+      parameters:
+      - description: パートナーID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interface_handler.SleepRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/girlfriend-backend_internal_domain_model.SleepLog'
+      summary: おやすみ（睡眠開始）
+      tags:
+      - sleep
 swagger: "2.0"

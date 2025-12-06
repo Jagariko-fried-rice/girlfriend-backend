@@ -23,7 +23,15 @@ type SleepRequest struct {
 	PartnerID string `json:"partner_id"`
 }
 
-// StartSleep: おやすみ (POST /sleep/start)
+// StartSleep godoc
+// @Summary      おやすみ（睡眠開始）
+// @Description  指定されたパートナーの睡眠計測を開始します
+// @Tags         sleep
+// @Accept       json
+// @Produce      json
+// @Param        request body handler.SleepRequest true "パートナーID"
+// @Success      200  {object}  model.SleepLog
+// @Router       /sleep/start [post]
 func (h *SleepHandler) StartSleep(w http.ResponseWriter, r *http.Request) {
 	var req SleepRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -65,7 +73,15 @@ func (h *SleepHandler) StartSleep(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(newLog)
 }
 
-// EndSleep: おはよう (POST /sleep/end)
+// EndSleep godoc
+// @Summary      おはよう（起床）
+// @Description  睡眠を終了し、睡眠時間を計算して記録します
+// @Tags         sleep
+// @Accept       json
+// @Produce      json
+// @Param        request body handler.SleepRequest true "パートナーID"
+// @Success      200  {object}  model.SleepLog
+// @Router       /sleep/end [post]
 func (h *SleepHandler) EndSleep(w http.ResponseWriter, r *http.Request) {
 	var req SleepRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
