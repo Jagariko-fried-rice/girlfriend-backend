@@ -19,6 +19,8 @@ type PartnerImageRepository interface {
 type ScenarioRepository interface {
 	// 指定したステージのシナリオからランダムに1つ取得
 	FindRandomByStage(ctx context.Context, stage string) (*model.Scenario, error)
+// 特定のルートを指定して取得するメソッド
+	FindByStageAndRoute(ctx context.Context, stage string, route string) (*model.Scenario, error)
 }
 type UserRepository interface {
 	// 全ユーザーと、そのパートナー情報を取得
