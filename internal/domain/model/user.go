@@ -8,8 +8,10 @@ type UserWithPartner struct {
 	PartnerID    uuid.UUID
 	PartnerName  string
 	CurrentStage string
-	// --- 追加 ---
 	Stamina      int
 	Intelligence int
 	Sense        int
+
+	Personality  string
+	HairColor    string
 }
