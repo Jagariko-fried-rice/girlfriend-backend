@@ -44,6 +44,8 @@ func main() {
 	// 睡眠API
 	mux.HandleFunc("POST /sleep/start", sleepHandler.StartSleep)
 	mux.HandleFunc("POST /sleep/end", sleepHandler.EndSleep)
+	//パートナー登録API
+	mux.HandleFunc("POST /partners", partnerHandler.CreatePartner)
 
 	// CORS設定（ミドルウェア）
 	corsMux := enableCORS(mux)
