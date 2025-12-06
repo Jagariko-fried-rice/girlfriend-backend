@@ -8,4 +8,6 @@ import (
 type MemoryRepository interface {
 	// 思い出を記録する
 	Create(ctx context.Context, memory *model.Memory) error
+
+	FindByPartnerID(ctx context.Context, partnerID string) ([]*model.Memory, error)
 }
