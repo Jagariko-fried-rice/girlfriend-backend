@@ -36,7 +36,7 @@ func (r *scenarioRepository) FindRandomByStage(ctx context.Context, stage string
 
 // FindByStageAndRoute: ステージとルート名を指定してシナリオを取得
 func (r *scenarioRepository) FindByStageAndRoute(ctx context.Context, stage string, route string) (*model.Scenario, error) {
-	// image_prompt も含めて取得する
+	// 1. SQLの実行（ここは合っています）
 	query := `
 		SELECT id, stage, routes, template_text, stat_effect, weight, 
 		       condition_stat, condition_value, success_text, failure_text, success_effect, failure_effect,
@@ -53,15 +53,18 @@ func (r *scenarioRepository) FindByStageAndRoute(ctx context.Context, stage stri
 	err := r.db.QueryRowContext(ctx, query, stage, route).Scan(
 		&s.ID, &s.Stage, &s.Routes, &s.TemplateText, &statEffect, &s.Weight,
 		&conditionStat, &s.ConditionValue, &successText, &failureText, &successEffect, &failureEffect,
-		&s.ImagePrompt, // ★追加したフィールド
+		&s.ImagePrompt,
 	)
 	
 	if err != nil {
 		return nil, fmt.Errorf("scenario not found: %w", err)
 	}
 
-	// 取得した値を構造体にセット
+	// 2. 取得した値を構造体にセット
 	s.StatEffect = statEffect
+	s.SuccessEffect = successEffect
+	s.FailureEffect = failureEffect
+
 	if conditionStat.Valid { s.ConditionStat = &conditionStat.String }
 	if successText.Valid { s.SuccessText = &successText.String }
 	if failureText.Valid { s.FailureText = &failureText.String }
