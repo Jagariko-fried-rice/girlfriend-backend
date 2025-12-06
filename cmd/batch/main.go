@@ -9,16 +9,15 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq" // DBドライバ
+	_ "github.com/lib/pq"
 
 	"girlfriend-backend/internal/domain/model"
 	"girlfriend-backend/internal/domain/repository"
 	"girlfriend-backend/internal/infrastructure/external"
-	dbRepo "girlfriend-backend/internal/infrastructure/repository" // 名前が被るので別名をつける
+	dbRepo "girlfriend-backend/internal/infrastructure/repository"
 )
 
 func main() {
-	// 1. 環境設定の読み込み
 	if err := godotenv.Load(); err != nil {
 		log.Println("Note: .env file not found")
 	}
@@ -28,32 +27,32 @@ func main() {
 		log.Fatal("DB_URL is required")
 	}
 
-	// 2. データベース接続
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatalf("DB接続エラー: %v", err)
 	}
 	defer db.Close()
 
-	// 3. 依存関係の組み立て (Dependency Injection)
-	// 「DBリポジトリ」と「AIクライアント」を用意します
 	var imageRepo repository.PartnerImageRepository
 	imageRepo = dbRepo.NewPartnerImageRepository(db)
 
+	// ★変更: Stable Diffusionクライアントを使用
+	// ローカルのSD APIのURLを指定 (デフォルトは http://127.0.0.1:7860)
+	sdAPI := os.Getenv("SD_API_URL")
+	if sdAPI == "" {
+		sdAPI = "http://127.0.0.1:7860"
+	}
 	var generator repository.ImageGenerator
-	// ※APIキーは一旦ダミーですが、ここを本番のキー(os.Getenv("GOOGLE_API_KEY"))に変えれば本番化できます
-	generator = external.NewImagenClient("DUMMY_API_KEY")
+	generator = external.NewStableDiffusionClient(sdAPI)
 
-	// 4. バッチ処理の実行
+	// 実行
 	ctx := context.Background()
 	fmt.Println("バッチ処理を開始します...")
 
-	// ---------------------------------------------------------
-	// A. 未生成のデータを1件探す
-	// ---------------------------------------------------------
+	// 1. 未生成データの取得
 	targetImage, err := imageRepo.FindFirstPending(ctx)
 	if err != nil {
-		log.Fatalf("データ検索中にエラーが発生: %v", err)
+		log.Fatalf("データ検索エラー: %v", err)
 	}
 
 	if targetImage == nil {
@@ -61,13 +60,11 @@ func main() {
 		return
 	}
 
-	fmt.Printf("生成対象を発見: ID=%s, Prompt=%s\n", targetImage.ID, targetImage.GenerationPrompt)
+	fmt.Printf("生成対象を発見: Prompt=%s\n", targetImage.GenerationPrompt[:20]+"...")
 
-	// ---------------------------------------------------------
-	// B. 画像生成を実行
-	// ---------------------------------------------------------
-	// 30秒でタイムアウトするように設定
-	genCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	// 2. 画像生成 (Stable Diffusion)
+	// SDは重いのでタイムアウトを長めに(5分)
+	genCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
 	url, err := generator.GenerateImage(genCtx, targetImage.GenerationPrompt)
@@ -77,17 +74,15 @@ func main() {
 		errorMsg := err.Error()
 		targetImage.ErrorMessage = &errorMsg
 	} else {
-		fmt.Println("生成成功！ URL:", url)
+		fmt.Println("生成成功！ Path:", url)
 		targetImage.Status = model.ImageStatusCompleted
 		targetImage.ImageURL = &url
 	}
 
-	// ---------------------------------------------------------
-	// C. 結果を保存
-	// ---------------------------------------------------------
+	// 3. 結果保存
 	if err := imageRepo.Update(ctx, targetImage); err != nil {
-		log.Fatalf("結果の保存に失敗: %v", err)
+		log.Fatalf("結果保存失敗: %v", err)
 	}
 
-	fmt.Println("DBの更新が完了しました。")
+	fmt.Println("DB更新完了。")
 }
