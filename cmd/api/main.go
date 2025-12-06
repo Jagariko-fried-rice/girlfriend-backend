@@ -59,6 +59,11 @@ func main() {
 	// Swagger UIのエンドポイント
 	mux.Handle("GET /swagger/", httpSwagger.WrapHandler)
 
+	// 生成された画像ファイルを配信する設定
+	// /images/xxxx.png にアクセスすると output_images フォルダの中身を表示
+	fileServer := http.FileServer(http.Dir("./output_images"))
+	mux.Handle("/images/", http.StripPrefix("/images/", fileServer))
+
 	// CORS設定（ミドルウェア）
 	corsMux := enableCORS(mux)
 
