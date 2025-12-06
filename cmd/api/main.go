@@ -28,7 +28,11 @@ func main() {
 	// 依存関係の注入
 	partnerRepo := repository.NewPartnerRepository(db)
 	memoryRepo := repository.NewMemoryRepository(db)
+	sleepRepo := repository.NewSleepLogRepository(db)
+	
 	partnerHandler := handler.NewPartnerHandler(partnerRepo, memoryRepo)
+	sleepHandler := handler.NewSleepHandler(sleepRepo, partnerRepo)
+
 
 	// ルーティング設定
 	mux := http.NewServeMux()
@@ -36,6 +40,10 @@ func main() {
 	// エンドポイント定義
 	mux.HandleFunc("GET /partners/{id}", partnerHandler.GetStatus)
 	mux.HandleFunc("GET /partners/{id}/memories", partnerHandler.GetMemories)
+
+	// 睡眠API
+	mux.HandleFunc("POST /sleep/start", sleepHandler.StartSleep)
+	mux.HandleFunc("POST /sleep/end", sleepHandler.EndSleep)
 
 	// CORS設定（ミドルウェア）
 	corsMux := enableCORS(mux)
