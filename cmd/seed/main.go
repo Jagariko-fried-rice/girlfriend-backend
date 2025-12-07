@@ -147,12 +147,96 @@ func importVoiceLines(db *sql.DB, filePath string) error {
 	return tx.Commit()
 }
 
-// ... (既存の importScenarios 関数はそのまま残してください) ...
-// ※長くなるので省略しますが、元の importScenarios 関数も必ずファイル内に残してください
+// importScenarios: シナリオデータのインポート処理（ロジックを分離）
 func importScenarios(db *sql.DB, filePath string) error {
-    // (元のコードと同じ内容)
-    file, err := os.Open(filePath)
-    // ...
-    // ...
-    return tx.Commit()
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+	if _, err := reader.Read(); err != nil { // ヘッダー読み飛ばし
+		return err
+	}
+
+	records, err := reader.ReadAll()
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	// ImagePrompt対応済みのクエリ
+	query := `
+		INSERT INTO scenarios (
+			stage, routes, template_text, stat_effect, weight,
+			condition_stat, condition_value, success_text, failure_text, success_effect, failure_effect,
+			image_prompt
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		ON CONFLICT (stage, routes) 
+		DO UPDATE SET
+			template_text = EXCLUDED.template_text,
+			stat_effect = EXCLUDED.stat_effect,
+			weight = EXCLUDED.weight,
+			condition_stat = EXCLUDED.condition_stat,
+			condition_value = EXCLUDED.condition_value,
+			success_text = EXCLUDED.success_text,
+			failure_text = EXCLUDED.failure_text,
+			success_effect = EXCLUDED.success_effect,
+			failure_effect = EXCLUDED.failure_effect,
+			image_prompt = EXCLUDED.image_prompt;
+	`
+
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for i, record := range records {
+		weight, _ := strconv.Atoi(record[4])
+		
+		condVal := 0
+		if record[6] != "" {
+			condVal, _ = strconv.Atoi(record[6])
+		}
+
+		if !json.Valid([]byte(record[3])) {
+			tx.Rollback()
+			return fmt.Errorf("%d行目のJSON形式が不正です: %s", i+2, record[3])
+		}
+
+		var condStat, succText, failText, succEff, failEff interface{}
+		
+		if record[5] == "" { condStat = nil } else { condStat = record[5] }
+		if record[7] == "" { succText = nil } else { succText = record[7] }
+		if record[8] == "" { failText = nil } else { failText = record[8] }
+		if record[9] == "" { succEff = "{}" } else { succEff = record[9] }
+		if record[10] == "" { failEff = "{}" } else { failEff = record[10] }
+
+		imagePrompt := ""
+		if len(record) > 11 {
+			imagePrompt = record[11]
+		}
+		if imagePrompt == "" {
+			imagePrompt = record[2]
+		}
+
+		_, err := stmt.Exec(
+			record[0], record[1], record[2], record[3], weight,
+			condStat, condVal, succText, failText, succEff, failEff,
+			imagePrompt,
+		)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("%d行目でDBエラー: %w", i+2, err)
+		}
+	}
+
+	return tx.Commit()
 }
