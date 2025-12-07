@@ -42,8 +42,25 @@ func main() {
 	if sdAPI == "" {
 		sdAPI = "http://127.0.0.1:7860"
 	}
+
+	// Supabase Storageの設定
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	supabaseKey := os.Getenv("SUPABASE_KEY")
+	bucketName := os.Getenv("SUPABASE_BUCKET")
+	if bucketName == "" {
+		bucketName = "images" // デフォルトバケット名
+	}
+
+	var storageClient *external.SupabaseStorageClient
+	if supabaseURL != "" && supabaseKey != "" {
+		storageClient = external.NewSupabaseStorageClient(supabaseURL, supabaseKey, bucketName)
+		fmt.Println("Supabase Storageを使用します")
+	} else {
+		fmt.Println("注意: Supabase設定が見つからないため、ローカル保存モードで動作します")
+	}
+
 	var generator repository.ImageGenerator
-	generator = external.NewStableDiffusionClient(sdAPI)
+	generator = external.NewStableDiffusionClient(sdAPI, storageClient)
 
 	// 実行
 	ctx := context.Background()

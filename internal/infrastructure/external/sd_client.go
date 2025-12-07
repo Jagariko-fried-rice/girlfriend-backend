@@ -15,9 +15,10 @@ import (
 
 // StableDiffusionClient はローカルのSD APIと通信するクライアントです
 type StableDiffusionClient struct {
-	APIURL     string
-	OutputDir  string
-	HttpClient *http.Client
+	APIURL         string
+	OutputDir      string
+	HttpClient     *http.Client
+	StorageClient  *SupabaseStorageClient // 追加: ストレージクライアント
 }
 
 // リクエストのJSON構造（txt2img用）
@@ -39,7 +40,7 @@ type sdResponse struct {
 // ネガティブプロンプト（共通設定として定数化）
 const defaultNegativePrompt = "(worst quality:1.4), (low quality:1.4), bad anatomy, extra limbs, mutation, text, watermark, logo, too sharp, monochrome, harsh shadows, bright light, (exposed skin:1.5), (cleavage:1.5), (breasts:1.5), nipples, (provocative:1.5), sexy, erotic, seductive, alluring, lewd, (swimsuit), (lingerie), (wet clothes), (transparent), (see-through), (open mouth), (tongue), heavy makeup, dirty, messy room, (adult content), (close-up), (child), (teenager), (school uniform), (student), (middle-aged), (wrinkles)"
 
-func NewStableDiffusionClient(apiURL string) *StableDiffusionClient {
+func NewStableDiffusionClient(apiURL string, storageClient *SupabaseStorageClient) *StableDiffusionClient {
 	// 保存先フォルダを作成
 	outputDir := "output_images"
 	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
@@ -47,8 +48,9 @@ func NewStableDiffusionClient(apiURL string) *StableDiffusionClient {
 	}
 
 	return &StableDiffusionClient{
-		APIURL:    apiURL,
-		OutputDir: outputDir,
+		APIURL:        apiURL,
+		OutputDir:     outputDir,
+		StorageClient: storageClient,
 		HttpClient: &http.Client{
 			Timeout: 5 * time.Minute, // 生成には時間がかかるので長めに設定
 		},
@@ -109,6 +111,18 @@ func (c *StableDiffusionClient) GenerateImage(ctx context.Context, prompt string
 
 	// ファイル名生成 (タイムスタンプ)
 	fileName := fmt.Sprintf("generated_%d.png", time.Now().UnixNano())
+
+	// Supabase Storageが設定されている場合はアップロード
+	if c.StorageClient != nil {
+		publicURL, err := c.StorageClient.UploadImage(imgData, fileName)
+		if err != nil {
+			return "", fmt.Errorf("failed to upload to supabase: %w", err)
+		}
+		fmt.Printf("Supabaseアップロード完了: %s\n", publicURL)
+		return publicURL, nil
+	}
+
+	// 設定されていない場合はローカル保存 (開発用)
 	filePath := filepath.Join(c.OutputDir, fileName)
 
 	// 書き込み
@@ -118,8 +132,6 @@ func (c *StableDiffusionClient) GenerateImage(ctx context.Context, prompt string
 
 	fmt.Printf("画像保存完了: %s\n", filePath)
 	
-	// 本来はここでS3などにアップロードしてURLを返しますが、
 	// ローカル開発用として、APIサーバーからアクセスできるパスを返します
-	// (例: http://localhost:8080/images/generated_123.png)
 	return "/images/" + fileName, nil
 }
