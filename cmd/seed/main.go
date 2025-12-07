@@ -46,7 +46,6 @@ func main() {
 			} else {
 				fmt.Println("成功")
 			}
-		// ★追加: ボイス用CSVの処理
 		} else if strings.Contains(fileName, "voice_lines") {
 			if err := importVoiceLines(db, file); err != nil {
 				log.Printf("失敗: %v\n", err)
@@ -74,7 +73,7 @@ func copyFile(src, dst string) error {
 	return err
 }
 
-// ★追加: ボイスデータのインポート関数
+// ボイスデータのインポート関数（ファイルコピー版）
 func importVoiceLines(db *sql.DB, filePath string) error {
 	file, err := os.Open(filePath)
 	if err != nil { return err }
@@ -89,7 +88,6 @@ func importVoiceLines(db *sql.DB, filePath string) error {
 	tx, err := db.Begin()
 	if err != nil { return err }
 
-	// 毎回洗い替え（全削除して入れ直し）
 	_, err = tx.Exec("TRUNCATE TABLE voice_lines")
 	if err != nil {
 		tx.Rollback()
@@ -103,14 +101,18 @@ func importVoiceLines(db *sql.DB, filePath string) error {
 	if err != nil { return err }
 	defer stmt.Close()
 
-	// ファイル操作の準備
-	sourceDir := "seeds/assets/voice" // 元ファイル置き場
-	outputDir := "output_audio"       // 配信フォルダ
+	// ★修正ポイント: ファイルの置き場所
+	// アップロードされた構造に合わせて seeds/assets 直下に設定
+	// もし seeds/assets/voice フォルダに入れているなら "seeds/assets/voice" にしてください
+	sourceDir := "seeds/assets/voice" 
+	
+	outputDir := "output_audio"
 	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
 		os.Mkdir(outputDir, 0755)
 	}
 
 	for _, record := range records {
+		// CSV: personality, situation, line_text, audio_filename
 		personality := record[0]
 		situation := record[1]
 		text := record[2]
@@ -121,19 +123,20 @@ func importVoiceLines(db *sql.DB, filePath string) error {
 
 		dbAudioPath := "" 
 
-		// 音声ファイルがあればコピー
 		if fileName != "" {
 			srcPath := filepath.Join(sourceDir, fileName)
 			dstPath := filepath.Join(outputDir, fileName)
 
+			// ファイルが存在するか確認してからコピー
 			if _, err := os.Stat(srcPath); err == nil {
 				if err := copyFile(srcPath, dstPath); err != nil {
 					log.Printf("警告: コピー失敗 (%s): %v\n", fileName, err)
 				} else {
-					dbAudioPath = "/audio/" + fileName // URLパスとして保存
+					dbAudioPath = "/audio/" + fileName
+					fmt.Printf("登録: %s -> %s\n", personality, fileName)
 				}
 			} else {
-				log.Printf("警告: 音声ファイルなし (%s)\n", srcPath)
+				log.Printf("警告: 音声ファイルが見つかりません (%s)\n", srcPath)
 			}
 		}
 
@@ -147,30 +150,21 @@ func importVoiceLines(db *sql.DB, filePath string) error {
 	return tx.Commit()
 }
 
-// importScenarios: シナリオデータのインポート処理（ロジックを分離）
+// シナリオデータのインポート処理
 func importScenarios(db *sql.DB, filePath string) error {
 	file, err := os.Open(filePath)
-	if err != nil {
-		return err
-	}
+	if err != nil { return err }
 	defer file.Close()
 
 	reader := csv.NewReader(file)
-	if _, err := reader.Read(); err != nil { // ヘッダー読み飛ばし
-		return err
-	}
+	if _, err := reader.Read(); err != nil { return err }
 
 	records, err := reader.ReadAll()
-	if err != nil {
-		return err
-	}
+	if err != nil { return err }
 
 	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
+	if err != nil { return err }
 
-	// ImagePrompt対応済みのクエリ
 	query := `
 		INSERT INTO scenarios (
 			stage, routes, template_text, stat_effect, weight,
@@ -193,38 +187,36 @@ func importScenarios(db *sql.DB, filePath string) error {
 	`
 
 	stmt, err := tx.Prepare(query)
-	if err != nil {
-		return err
-	}
+	if err != nil { return err }
 	defer stmt.Close()
 
 	for i, record := range records {
 		weight, _ := strconv.Atoi(record[4])
 		
 		condVal := 0
-		if record[6] != "" {
+		if len(record) > 6 && record[6] != "" {
 			condVal, _ = strconv.Atoi(record[6])
 		}
 
-		if !json.Valid([]byte(record[3])) {
+		if len(record) > 3 && !json.Valid([]byte(record[3])) {
 			tx.Rollback()
 			return fmt.Errorf("%d行目のJSON形式が不正です: %s", i+2, record[3])
 		}
 
 		var condStat, succText, failText, succEff, failEff interface{}
 		
-		if record[5] == "" { condStat = nil } else { condStat = record[5] }
-		if record[7] == "" { succText = nil } else { succText = record[7] }
-		if record[8] == "" { failText = nil } else { failText = record[8] }
-		if record[9] == "" { succEff = "{}" } else { succEff = record[9] }
-		if record[10] == "" { failEff = "{}" } else { failEff = record[10] }
+		if len(record) > 5 && record[5] == "" { condStat = nil } else if len(record) > 5 { condStat = record[5] }
+		if len(record) > 7 && record[7] == "" { succText = nil } else if len(record) > 7 { succText = record[7] }
+		if len(record) > 8 && record[8] == "" { failText = nil } else if len(record) > 8 { failText = record[8] }
+		if len(record) > 9 && record[9] == "" { succEff = "{}" } else if len(record) > 9 { succEff = record[9] }
+		if len(record) > 10 && record[10] == "" { failEff = "{}" } else if len(record) > 10 { failEff = record[10] }
 
 		imagePrompt := ""
 		if len(record) > 11 {
 			imagePrompt = record[11]
 		}
 		if imagePrompt == "" {
-			imagePrompt = record[2]
+			imagePrompt = record[2] 
 		}
 
 		_, err := stmt.Exec(
