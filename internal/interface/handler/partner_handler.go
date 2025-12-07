@@ -13,10 +13,11 @@ import (
 type PartnerHandler struct {
 	PartnerRepo repository.PartnerRepository
 	MemoryRepo  repository.MemoryRepository
+	VoiceRepo   repository.VoiceRepository
 }
 
-func NewPartnerHandler(pRepo repository.PartnerRepository, mRepo repository.MemoryRepository) *PartnerHandler {
-	return &PartnerHandler{PartnerRepo: pRepo, MemoryRepo: mRepo}
+func NewPartnerHandler(pRepo repository.PartnerRepository, mRepo repository.MemoryRepository, vRepo repository.VoiceRepository) *PartnerHandler {
+	return &PartnerHandler{PartnerRepo: pRepo, MemoryRepo: mRepo, VoiceRepo: vRepo}
 }
 
 // GetStatus godoc
@@ -124,4 +125,39 @@ func (h *PartnerHandler) CreatePartner(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newPartner)
+}
+
+// GetVoices godoc
+// @Summary      ボイス一覧の取得
+// @Description  パートナーの性格に基づいたセリフと音声URLを取得します
+// @Tags         partners
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "Partner ID (UUID)"
+// @Success      200  {array}   model.VoiceLine
+// @Router       /partners/{id}/voices [get]
+func (h *PartnerHandler) GetVoices(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) < 4 {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+	partnerID := parts[2]
+
+	// 1. パートナーの性格を取得
+	partner, err := h.PartnerRepo.FindByID(r.Context(), partnerID)
+	if err != nil {
+		http.Error(w, "Partner not found", http.StatusNotFound)
+		return
+	}
+
+	// 2. ボイス一覧を取得
+	voices, err := h.VoiceRepo.FindByPersonality(r.Context(), partner.Personality)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(voices)
 }

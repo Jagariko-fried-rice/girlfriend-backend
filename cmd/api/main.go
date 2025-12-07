@@ -39,8 +39,9 @@ func main() {
 	partnerRepo := repository.NewPartnerRepository(db)
 	memoryRepo := repository.NewMemoryRepository(db)
 	sleepRepo := repository.NewSleepLogRepository(db)
+	voiceRepo := repository.NewVoiceRepository(db)
 
-	partnerHandler := handler.NewPartnerHandler(partnerRepo, memoryRepo)
+	partnerHandler := handler.NewPartnerHandler(partnerRepo, memoryRepo, voiceRepo) // 引数追加
 	sleepHandler := handler.NewSleepHandler(sleepRepo, partnerRepo)
 
 	// ルーティング設定
@@ -59,10 +60,17 @@ func main() {
 	// Swagger UIのエンドポイント
 	mux.Handle("GET /swagger/", httpSwagger.WrapHandler)
 
+	mux.HandleFunc("GET /partners/{id}/voices", partnerHandler.GetVoices)
+
 	// 生成された画像ファイルを配信する設定
 	// /images/xxxx.png にアクセスすると output_images フォルダの中身を表示
 	fileServer := http.FileServer(http.Dir("./output_images"))
 	mux.Handle("/images/", http.StripPrefix("/images/", fileServer))
+
+	// 音声ファイルの配信
+	// /audio/xxx.wav にアクセスすると output_audio フォルダの中身を返す
+	audioServer := http.FileServer(http.Dir("./output_audio"))
+	mux.Handle("/audio/", http.StripPrefix("/audio/", audioServer))
 
 	// CORS設定（ミドルウェア）
 	corsMux := enableCORS(mux)
