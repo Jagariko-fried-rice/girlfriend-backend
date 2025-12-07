@@ -75,3 +75,30 @@ func (r *partnerImageRepository) Create(ctx context.Context, img *model.PartnerI
 	_, err := r.db.ExecContext(ctx, query, img.PartnerID, img.Stage, img.GenerationPrompt, img.Status)
 	return err
 }
+
+func (r *partnerImageRepository) FindByPartnerID(ctx context.Context, partnerID string) ([]*model.PartnerImage, error) {
+	query := `
+		SELECT id, partner_id, stage, image_url, generation_prompt, status, error_message, created_at, updated_at
+		FROM partner_images
+		WHERE partner_id = $1
+		ORDER BY created_at DESC
+	`
+	rows, err := r.db.QueryContext(ctx, query, partnerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var images []*model.PartnerImage
+	for rows.Next() {
+		var i model.PartnerImage
+		if err := rows.Scan(
+			&i.ID, &i.PartnerID, &i.Stage, &i.ImageURL, &i.GenerationPrompt,
+			&i.Status, &i.ErrorMessage, &i.CreatedAt, &i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		images = append(images, &i)
+	}
+	return images, nil
+}

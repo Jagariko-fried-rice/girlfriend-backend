@@ -40,8 +40,9 @@ func main() {
 	memoryRepo := repository.NewMemoryRepository(db)
 	sleepRepo := repository.NewSleepLogRepository(db)
 	voiceRepo := repository.NewVoiceRepository(db)
+	imageRepo := repository.NewPartnerImageRepository(db)
 
-	partnerHandler := handler.NewPartnerHandler(partnerRepo, memoryRepo, voiceRepo) // 引数追加
+	partnerHandler := handler.NewPartnerHandler(partnerRepo, memoryRepo, voiceRepo, imageRepo)
 	sleepHandler := handler.NewSleepHandler(sleepRepo, partnerRepo)
 
 	// ルーティング設定
@@ -50,6 +51,7 @@ func main() {
 	// エンドポイント定義
 	mux.HandleFunc("GET /partners/{id}", partnerHandler.GetStatus)
 	mux.HandleFunc("GET /partners/{id}/memories", partnerHandler.GetMemories)
+	mux.HandleFunc("GET /partners/{id}/images", partnerHandler.GetImages)
 
 	// 睡眠API
 	mux.HandleFunc("POST /sleep/start", sleepHandler.StartSleep)

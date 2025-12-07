@@ -10,4 +10,5 @@ type PartnerImageRepository interface {
 	FindFirstPending(ctx context.Context) (*model.PartnerImage, error)
 	Update(ctx context.Context, image *model.PartnerImage) error
 	Create(ctx context.Context, image *model.PartnerImage) error
+	FindByPartnerID(ctx context.Context, partnerID string) ([]*model.PartnerImage, error)
 }

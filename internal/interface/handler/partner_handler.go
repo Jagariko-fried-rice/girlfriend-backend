@@ -14,10 +14,11 @@ type PartnerHandler struct {
 	PartnerRepo repository.PartnerRepository
 	MemoryRepo  repository.MemoryRepository
 	VoiceRepo   repository.VoiceRepository
+	ImageRepo   repository.PartnerImageRepository
 }
 
-func NewPartnerHandler(pRepo repository.PartnerRepository, mRepo repository.MemoryRepository, vRepo repository.VoiceRepository) *PartnerHandler {
-	return &PartnerHandler{PartnerRepo: pRepo, MemoryRepo: mRepo, VoiceRepo: vRepo}
+func NewPartnerHandler(pRepo repository.PartnerRepository, mRepo repository.MemoryRepository, vRepo repository.VoiceRepository, iRepo repository.PartnerImageRepository) *PartnerHandler {
+	return &PartnerHandler{PartnerRepo: pRepo, MemoryRepo: mRepo, VoiceRepo: vRepo, ImageRepo: iRepo}
 }
 
 // GetStatus godoc
@@ -160,4 +161,31 @@ func (h *PartnerHandler) GetVoices(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(voices)
+}
+
+// GetImages godoc
+// @Summary      生成画像一覧の取得
+// @Description  パートナーの生成された画像リストを取得します
+// @Tags         partners
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "Partner ID (UUID)"
+// @Success      200  {array}   model.PartnerImage
+// @Router       /partners/{id}/images [get]
+func (h *PartnerHandler) GetImages(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) < 4 {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+	partnerID := parts[2]
+
+	images, err := h.ImageRepo.FindByPartnerID(r.Context(), partnerID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(images)
 }
