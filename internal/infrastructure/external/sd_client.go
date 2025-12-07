@@ -15,10 +15,10 @@ import (
 
 // StableDiffusionClient はローカルのSD APIと通信するクライアントです
 type StableDiffusionClient struct {
-	APIURL         string
-	OutputDir      string
-	HttpClient     *http.Client
-	StorageClient  *SupabaseStorageClient // 追加: ストレージクライアント
+	APIURL        string
+	OutputDir     string
+	HttpClient    *http.Client
+	StorageClient *SupabaseStorageClient // 追加: ストレージクライアント
 }
 
 // リクエストのJSON構造（txt2img用）
@@ -131,7 +131,7 @@ func (c *StableDiffusionClient) GenerateImage(ctx context.Context, prompt string
 	}
 
 	fmt.Printf("画像保存完了: %s\n", filePath)
-	
+
 	// ローカル開発用として、APIサーバーからアクセスできるパスを返します
 	return "/images/" + fileName, nil
 }

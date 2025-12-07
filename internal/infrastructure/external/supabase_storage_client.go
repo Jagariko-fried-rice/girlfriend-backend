@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
-	"os"
 	"time"
 )
 
