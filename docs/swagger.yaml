@@ -53,6 +53,19 @@ definitions:
         description: まだ起きてない時はNULLなのでポインタ
         type: string
     type: object
+  girlfriend-backend_internal_domain_model.VoiceLine:
+    properties:
+      audio_url:
+        type: string
+      id:
+        type: string
+      line_text:
+        type: string
+      personality:
+        type: string
+      situation:
+        type: string
+    type: object
   internal_interface_handler.CreatePartnerRequest:
     properties:
       hair_color:
@@ -142,6 +155,29 @@ paths:
               $ref: '#/definitions/girlfriend-backend_internal_domain_model.Memory'
             type: array
       summary: 思い出の取得
+      tags:
+      - partners
+  /partners/{id}/voices:
+    get:
+      consumes:
+      - application/json
+      description: パートナーの性格に基づいたセリフと音声URLを取得します
+      parameters:
+      - description: Partner ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/girlfriend-backend_internal_domain_model.VoiceLine'
+            type: array
+      summary: ボイス一覧の取得
       tags:
       - partners
   /sleep/end:

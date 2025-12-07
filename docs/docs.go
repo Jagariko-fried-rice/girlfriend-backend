@@ -116,6 +116,41 @@ const docTemplate = `{
                 }
             }
         },
+        "/partners/{id}/voices": {
+            "get": {
+                "description": "パートナーの性格に基づいたセリフと音声URLを取得します",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "partners"
+                ],
+                "summary": "ボイス一覧の取得",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Partner ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/girlfriend-backend_internal_domain_model.VoiceLine"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/sleep/end": {
             "post": {
                 "description": "睡眠を終了し、睡眠時間を計算して記録します",
@@ -262,6 +297,26 @@ const docTemplate = `{
                 },
                 "wake_at": {
                     "description": "まだ起きてない時はNULLなのでポインタ",
+                    "type": "string"
+                }
+            }
+        },
+        "girlfriend-backend_internal_domain_model.VoiceLine": {
+            "type": "object",
+            "properties": {
+                "audio_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "line_text": {
+                    "type": "string"
+                },
+                "personality": {
+                    "type": "string"
+                },
+                "situation": {
                     "type": "string"
                 }
             }
