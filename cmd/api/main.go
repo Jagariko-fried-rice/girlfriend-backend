@@ -10,8 +10,9 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 
-	httpSwagger "github.com/swaggo/http-swagger" 
 	_ "girlfriend-backend/docs"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 
 	"girlfriend-backend/internal/infrastructure/repository"
 	"girlfriend-backend/internal/interface/handler"

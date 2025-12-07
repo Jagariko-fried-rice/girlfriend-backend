@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/google/uuid"
 	"girlfriend-backend/internal/domain/model"
 	"girlfriend-backend/internal/domain/repository"
+
+	"github.com/google/uuid"
 )
 
 type PartnerHandler struct {
